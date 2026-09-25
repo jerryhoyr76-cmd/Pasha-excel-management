@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Student Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #f4f7fb;
+            color: #172033
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a, #2563eb);
+            color: #fff;
+            padding: 24px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 25px
+        }
+
+        header p {
+            margin: 5px 0 0;
+            opacity: .8
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 0 18px
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 22px
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px #17203312
+        }
+
+        .card b {
+            font-size: 28px;
+            display: block;
+            margin-top: 7px
+        }
+
+        .muted {
+            color: #64748b
+        }
+
+        .toolbar {
+            background: #fff;
+            padding: 16px;
+            border-radius: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 25px #17203312
+        }
+
+        input,
+        select {
+            border: 1px solid #d7deea;
+            border-radius: 9px;
+            padding: 11px 12px;
+            outline: none;
+            background: #fff
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2563eb
+        }
+
+        button {
+            border: 0;
+            border-radius: 9px;
+            padding: 11px 15px;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .primary {
+            background: #2563eb;
+            color: #fff
+        }
+
+        .success {
+            background: #16a34a;
+            color: #fff
+        }
+
+        .dark {
+            background: #172033;
+            color: #fff
+        }
+
+        .danger {
+            background: #dc2626;
+            color: #fff
+        }
+
+        .light {
+            background: #e8eef8;
+            color: #172033
+        }
+
+        .table-wrap {
+            background: #fff;
+            border-radius: 15px;
+            overflow: auto;
+            box-shadow: 0 8px 25px #17203312
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px
+        }
+
+        th,
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #edf1f7;
+            text-align: left
+        }
+
+        th {
+            background: #f8fafc;
+            font-size: 13px;
+            color: #475569
+        }
+
+        .badge {
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .paid {
+            background: #dcfce7;
+            color: #166534
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #0008;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .modal.show {
+            display: flex
+        }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 18px;
+            padding: 25px;
+            max-width: 650px;
+            width: 100%
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px
+        }
+
+        .form label {
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .form input,
+        .form select {
+            width: 100%;
+            margin-top: 6px
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px
+        }
+
+        @media(max-width:800px) {
+            .cards {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .form {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:500px) {
+            .cards {
+                grid-template-columns: 1fr
+            }
+
+            header {
+                display: block
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>📊 Pasha Student Manager</h1>
+            <p>Excel-powered student management </p>
+        </div>
+        <div><button class="success" onclick="downloadExcel()">⬇ Export Excel</button></div>
+    </header>
+    <div class="container">
+        <div class="cards">
+            <div class="card"><span class="muted">Total Students</span><b id="total">0</b></div>
+            <div class="card"><span class="muted">Paid Fees</span><b id="paid">0</b></div>
+            <div class="card"><span class="muted">Pending Fees</span><b id="pending">0</b></div>
+            <div class="card"><span class="muted">Total Fee</span><b id="fee">Rs 0</b></div>
+        </div>
+        <div class="toolbar">
+            <input id="search" placeholder="🔎 Search student..." oninput="render()">
+            <select id="classFilter" onchange="render()">
+                <option value="">All Classes</option>
+            </select>
+            <select id="statusFilter" onchange="render()">
+                <option value="">All Status</option>
+                <option>Paid</option>
+                <option>Pending</option>
+            </select>
+            <button class="primary" onclick="openModal()">＋ Add Student</button>
+            <label class="light" style="padding:11px 15px;border-radius:9px;cursor:pointer">📥 Import Excel
+                <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden onchange="importExcel(event)">
+            </label>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reg No</th>
+                        <th>Student Name</th>
+                        <th>Father Name</th>
+                        <th>Class</th>
+                        <th>Phone</th>
+                        <th>Fee</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-box">
+            <h2 id="modalTitle">Add Student</h2>
+            <div class="form">
+                <label>Reg No<input id="reg"></label>
+                <label>Student Name<input id="name"></label>
+                <label>Father Name<input id="father"></label>
+                <label>Class<input id="cls" placeholder="e.g. BS-IT"></label>
+                <label>Phone<input id="phone"></label>
+                <label>Fee<input id="feeInput" type="number"></label>
+                <label>Status<select id="status">
+                        <option>Paid</option>
+                        <option>Pending</option>
+                    </select></label>
+            </div>
+            <div class="actions"><button class="light" onclick="closeModal()">Cancel</button><button class="primary"
+                    onclick="saveStudent()">Save Student</button></div>
+        </div>
+    </div>
+
+    <script>
+        let students = [
+            {reg: "1001", name: "Ali Khan", father: "Muhammad Khan", cls: "BS-IT", phone: "03001234567", fee: 5000, status: "Paid"},
+            {reg: "1002", name: "Ahmed Shah", father: "Aslam Shah", cls: "BS-CS", phone: "03111234567", fee: 4500, status: "Pending"},
+            {reg: "1003", name: "Usman Ali", father: "Riaz Ali", cls: "BS-IT", phone: "03221234567", fee: 5000, status: "Paid"},
+            {reg: "1004", name: "Hamza Malik", father: "Nadeem Malik", cls: "BS-IT", phone: "03331234567", fee: 5000, status: "Pending"},
+            {reg: "1005", name: "Ayesha Noor", father: "Imran Noor", cls: "BS-CS", phone: "03441234567", fee: 4500, status: "Paid"}
+        ];
+        let editIndex = -1;
+        const $ = id => document.getElementById(id);
+        function money(n) {return "Rs " + Number(n || 0).toLocaleString("en-PK")}
+        function render() {
+            let q = $("search").value.toLowerCase(), cf = $("classFilter").value, sf = $("statusFilter").value;
+            let rows = students.filter(s => (s.name + s.father + s.reg + s.phone + s.cls).toLowerCase().includes(q) && (!cf || s.cls === cf) && (!sf || s.status === sf));
+            $("tbody").innerHTML = rows.map(s => `<tr><td><b>${s.reg}</b></td><td>${s.name}</td><td>${s.father}</td><td>${s.cls}</td><td>${s.phone}</td><td>${money(s.fee)}</td><td><span class="badge ${s.status === "Paid" ? "paid" : "pending"}">${s.status}</span></td><td><button class="light" onclick="editStudent('${s.reg}')">Edit</button> <button class="danger" onclick="deleteStudent('${s.reg}')">Delete</button></td></tr>`).join("");
+            $("total").textContent = students.length; $("paid").textContent = students.filter(s => s.status === "Paid").length; $("pending").textContent = students.filter(s => s.status === "Pending").length; $("fee").textContent = money(students.reduce((a, s) => a + Number(s.fee || 0), 0));
+            let classes = [...new Set(students.map(s => s.cls))]; let old = cf;
+            $("classFilter").innerHTML = '<option value="">All Classes</option>' + classes.map(c => `<option ${c === old ? "selected" : ""}>${c}</option>`).join("");
+        }
+        function openModal() {editIndex = -1; $("modalTitle").textContent = "Add Student";["reg", "name", "father", "cls", "phone", "feeInput"].forEach(x => $(x).value = ""); $("status").value = "Paid"; $("modal").classList.add("show")}
+        function closeModal() {$("modal").classList.remove("show")}
+        function saveStudent() {
+            let s = {reg: $("reg").value.trim(), name: $("name").value.trim(), father: $("father").value.trim(), cls: $("cls").value.trim(), phone: $("phone").value.trim(), fee: Number($("feeInput").value || 0), status: $("status").value};
+            if (!s.reg || !s.name) {alert("Reg No and Student Name are required."); return }
+            if (editIndex >= 0) students[editIndex] = s; else students.push(s); closeModal(); render();
+        }
+        function editStudent(reg) {editIndex = students.findIndex(s => s.reg === reg); let s = students[editIndex]; $("modalTitle").textContent = "Edit Student"; $("reg").value = s.reg; $("name").value = s.name; $("father").value = s.father; $("cls").value = s.cls; $("phone").value = s.phone; $("feeInput").value = s.fee; $("status").value = s.status; $("modal").classList.add("show")}
+        function deleteStudent(reg) {if (confirm("Delete this student?")) {students = students.filter(s => s.reg !== reg); render()} }
+        function downloadExcel() {
+            let ws = XLSX.utils.json_to_sheet(students.map(s => ({"Reg No": s.reg, "Student Name": s.name, "Father Name": s.father, "Class": s.cls, "Phone": s.phone, "Fee": s.fee, "Status": s.status})));
+            let wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Students"); XLSX.writeFile(wb, "students.xlsx");
+        }
+        function importExcel(e) {
+            let file = e.target.files[0]; if (!file) return; let reader = new FileReader();
+            reader.onload = ev => {
+                let data = new Uint8Array(ev.target.result), wb = XLSX.read(data, {type: "array"}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                students = json.map(r => ({reg: String(r["Reg No"] ?? r.Reg ?? ""), name: String(r["Student Name"] ?? r.Name ?? ""), father: String(r["Father Name"] ?? r.Father ?? ""), cls: String(r.Class ?? ""), phone: String(r.Phone ?? ""), fee: Number(r.Fee ?? 0), status: String(r.Status ?? "Pending")})).filter(s => s.name || s.reg); render(); alert("Excel imported successfully!")
+            };
+            reader.readAsArrayBuffer(file); e.target.value = "";
+        }
+        render();
+    </script>
+</body>
+
+</html>
